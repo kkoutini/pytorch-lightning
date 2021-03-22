@@ -292,7 +292,7 @@ class Trainer(
                 <https://pytorch.org/blog/pytorch-1.6-now-includes-stochastic-weight-averaging/>_`
 
         """
-        super().__init__()
+        super(Trainer).__init__()
 
         distributed_backend = distributed_backend or accelerator
 
