@@ -43,12 +43,23 @@ def rank_zero_only(fn):
 
     return wrapped_fn
 
+def raise_stack_level(fn,stacklevel=2):
+
+    @wraps(fn)
+    def wrapped_fn(*args, **kwargs):
+        if rank_zero_only.rank == 0:
+            kwargs['stacklevel'] = kwargs.get('stacklevel', 1) + stacklevel
+            return fn(*args, **kwargs)
+
+    return wrapped_fn
+
 
 # add the attribute to the function but don't overwrite in case Trainer has already set it
 rank_zero_only.rank = getattr(rank_zero_only, 'rank', int(os.environ.get('LOCAL_RANK', 0)))
 
 
 def _warn(*args, **kwargs):
+    kwargs['stacklevel'] = kwargs.get('stacklevel',1) + 1
     warnings.warn(*args, **kwargs)
 
 
@@ -62,7 +73,7 @@ def _debug(*args, **kwargs):
 
 rank_zero_debug = rank_zero_only(_debug)
 rank_zero_info = rank_zero_only(_info)
-rank_zero_warn = rank_zero_only(_warn)
+rank_zero_warn = rank_zero_only(raise_stack_level(_warn))
 
 
 def gather_all_tensors(result: Union[torch.Tensor], group: Optional[Any] = None):
